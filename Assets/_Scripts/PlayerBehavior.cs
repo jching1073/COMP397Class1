@@ -4,27 +4,50 @@ using UnityEngine;
 
 public class PlayerBehavior : MonoBehaviour
 {
-    public float movementForce; // pulls value from unity
-    public Rigidbody rigidBody; // pulls from unity
-
+    public CharacterController controller; //
+    public float maxSpeed = 10.0f;
+    public float gravity = -30.0f;
+    public float jumpHight = 3.0f;
+    public Transform groundCheck;
+    public float groundRadius = 0.5f;
+    public LayerMask groundMask; //Select what object to collied it
+    public Vector3 velocity;
+    public bool isGrounded;
+    
     // Start is called before the first frame update
     void Start()
     {
-        rigidBody = GetComponent<Rigidbody>(); // Searches the game object for a rigidbody Done at Runtime
+        controller = GetComponent<CharacterController>(); // Assign Camera Controller from player
     }
     
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetAxisRaw("Horizontal") > 0)
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundRadius, groundMask);
+
+        if(isGrounded && velocity.y < 0)
         {
-            //move to the right
-            rigidBody.AddForce(Vector3.right * movementForce);
+            velocity.y = -2.0f; // drop it to the ground
         }
-        if( Input.GetAxisRaw("Horizontal") < 0)
+        float x = Input.GetAxis("Horizontal");
+        float z = Input.GetAxis("Vertical");
+
+        Vector3 move = transform.right * x + transform.forward * z;
+
+        controller.Move(move * maxSpeed * Time.deltaTime);
+        if(Input.GetButton("Jump") && isGrounded)
         {
-            //move left
-            rigidBody.AddForce(Vector3.left * movementForce);
+            velocity.y = Mathf.Sqrt(jumpHight * 2.0f * gravity);
         }
+        velocity.y -= gravity * Time.deltaTime;
+
+        controller.Move(velocity * Time.deltaTime);
     }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(groundCheck.position, groundRadius);
+    }
+
 }
